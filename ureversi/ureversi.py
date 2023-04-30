@@ -82,6 +82,23 @@ class Board:
                          self.bitmap_white)
           self.board[ i + j * 8 ] = 2
 
+  # 駒を置けるかどうかのチェック
+  def is_placeable(self, pos, color):
+    if self.board[ pos[0] + pos[1] * 8 ] == 0:
+      return True
+    else:
+      return False
+
+  # 駒を置く
+  def place(self, pos, color):
+    self.board[ pos[0] + pos[1] * 8 ] = (-1) * color
+
+  # 駒を数える
+  def count(self):
+    count_b = self.board.count(1) + self.board.count(-1)
+    count_w = self.board.count(2) + self.board.count(-2)
+    return (count_b, count_w)      
+
 # カーソルクラス
 class Cursor:
 
@@ -254,6 +271,25 @@ def main():
     cursor = Cursor((0, 0), (0, 0))
     cursor.scroll()
 
+    # インフォメーション表示
+    print("\x1b[2;53H\x1b[mMicroReversi\x1b[m", end="")
+    print("\x1b[3;53H\x1b[mPRO-68K     \x1b[m", end="")
+
+    print("\x1b[6;53H\x1b[37mCOMPUTER\x1b[m", end="")
+    print("\x1b[8;53H白(後手)", end="")
+    print("\x1b[10;53H2枚", end="")
+    
+    print("\x1b[14;53H\x1b[37mPLAYER\x1b[m", end="")
+    print("\x1b[16;53H黒(先手)", end="")
+    print("\x1b[18;53H2枚", end="")
+
+    print("\x1b[22;53Hカーソルキー", end="")
+    print("\x1b[23;53Hの上下左右で", end="")
+    print("\x1b[24;53Hマスを選択し", end="")
+    print("\x1b[25;53Hリターンで駒", end="")
+    print("\x1b[26;53Hを置きます", end="")
+    print("\x1b[29;53HESCで退出", end="")
+
     # ゲームループ
     abort = False
     while abort is False:
@@ -281,6 +317,14 @@ def main():
       # ESCキーが押された？
       if abort:
         break
+
+      # カーソル位置に本当における？
+      if board.is_placeable((cursor.pos_x, cursor.pos_y), 1):
+        board.place((cursor.pos_x, cursor.pos_y), 1)
+        board.repaint()
+        counts = board.count()
+        print(f"\x1b[10;53H{counts[1]}枚 ", end="")
+        print(f"\x1b[18;53H{counts[0]}枚 ", end="")
 
 
   # 終了処理
