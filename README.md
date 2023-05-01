@@ -8,6 +8,8 @@ yunk氏の [MicroPython for X680x0](https://github.com/yunkya2/micropython-x68k/
 
 <img src='images/ureversi2.png' width='600'/>
 
+<img src='images/ureversi3.png' width='600'/>
+
 ---
 
 ### インストール
@@ -31,9 +33,5 @@ RAMDISKを作成し、そこに展開を行います。
 X68000Z EAK 以外の環境で起動した場合は、最初に見つかったRAMDISKドライブに書き込みを行いますので注意してください。
 
 ---
-
-
-<img src='images/ureversi3.png' width='600'/>
-
 
 
