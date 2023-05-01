@@ -14,7 +14,7 @@ yunk氏の [MicroPython for X680x0](https://github.com/yunkya2/micropython-x68k/
 
 - [MicroPython for X680x0](https://github.com/yunkya2/micropython-x68k/tree/port-x68k/ports/x68k) の最新版を導入しておく。
 
-- [ureversi.lzh](https://github.com/tantanGH/ureverse/raw/main/ureversi.lzh) をダウンロードし、新規ディレクトリに展開する。
+- [ureversi.lzh](https://github.com/tantanGH/ureversi/raw/main/ureversi.lzh) をダウンロードし、新規ディレクトリに展開する。
 
 - 展開したディレクトリにカレントディレクトリを移し、`*.dat` ファイルと `ureversi.py` が存在するのを確認して、以下のコマンドで起動する。
 
