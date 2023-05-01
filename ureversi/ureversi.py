@@ -297,62 +297,52 @@ def load_full_image(image_file):
     x68k.vsync()
     x68k.iocs(x68k.i.B_WPOKE, a1=0xe82600, d1=(b | 0x0f))  
 
-# 342x512x65536イメージファイルの縦スクロール表示
+# 286x512x65536イメージファイルのワイプ表示
 def load_portrait_image(image_file):
   with open(image_file, "rb") as f:
     
-    # 384x256x65536モード (IPL-ROM 1.6 or CRTMOD16.X)
-    x68k.crtmod(31, True)
+    # 512x512x65536モード
+    x68k.vsync()
+    x68k.crtmod(12, True)
+
+    # スプライト＞テキスト＞グラフィックの順に画面プライオリティを変更する
+#    x68k.vsync()
+#    x68k.iocs(x68k.i.B_WPOKE, a1=0xe82500, d1=0b00000110_11100100)
+
+    # ほぼ黒のテキストで塗りつぶしておく
+#    tvram = x68k.TVRam()
+#    tvram.palet(2, 0b00000_00000_00000_1)
+#    tvram.fill(1, 0, 0, 511, 511)
 
     # 表示領域外にも描けるようにクリッピング領域を広げる
-    x68k.iocs(x68k.i.WINDOW, d1=0, d2=0, d3=511, d4=511)
+#    x68k.iocs(x68k.i.WINDOW, d1=0, d2=0, d3=511, d4=511)
 
     # 一旦グラフィックOFF
-    b = x68k.iocs(x68k.i.B_WPEEK, a1=0xe82600) & 0xffe0
-    x68k.vsync()
-    x68k.iocs(x68k.i.B_WPOKE, a1=0xe82600, d1=b)
+#    b = x68k.iocs(x68k.i.B_WPEEK, a1=0xe82600) & 0xffe0
+#    x68k.vsync()
+#    x68k.iocs(x68k.i.B_WPOKE, a1=0xe82600, d1=b)
 
-    # ファイルの内容をGVRAMに転送
+    # ファイルの内容をGVRAMにあえて4ラインずつ転送
     gvram = x68k.GVRam()
-    for y in range(0, 512, 64):
-      line_data = f.read(342 * 2 * 64)
-      gvram.put(22, y, 363, y + 63, line_data)
-
-    # 初期スクロール位置
-    x68k.iocs(x68k.i.SCROLL, d1=0, d2=0, d3=256)
-    x68k.iocs(x68k.i.SCROLL, d1=1, d2=0, d3=256)
-    x68k.iocs(x68k.i.SCROLL, d1=2, d2=0, d3=256)
-    x68k.iocs(x68k.i.SCROLL, d1=3, d2=0, d3=256)
+    for y in range(0, 512, 4):
+      line_data = f.read(286 * 2 * 4)
+      x68k.vsync()
+      gvram.put(112, y, 397, y + 3, line_data)
 
     # グラフィックON
-    x68k.vsync()
-    x68k.iocs(x68k.i.B_WPOKE, a1=0xe82600, d1=(b | 0x0f))  
+#    x68k.vsync()
+#    x68k.iocs(x68k.i.B_WPOKE, a1=0xe82600, d1=(b | 0x0f))  
 
-    # 一呼吸置いて
-    time.sleep(2.000)
-
-    # お楽しみ縦スクロール
-    for i in range(256):
-      y = 255 - i
-      x68k.vsync()
-      x68k.iocs(x68k.i.SCROLL, d1=0, d2=0, d3=y)
-      x68k.iocs(x68k.i.SCROLL, d1=1, d2=0, d3=y)
-      x68k.iocs(x68k.i.SCROLL, d1=2, d2=0, d3=y)
-      x68k.iocs(x68k.i.SCROLL, d1=3, d2=0, d3=y)
+    # テキストを消していく
+#    for y in reversed(range(512)):
+#      x68k.vsync()
+#      tvram.xline(1, 0, y, 512, 0)
 
 # メイン
 def main():
 
   # randomize
   random.seed(int(time.time() * 10))
-
-  # IPL-ROM version check
-  rom_version = x68k.iocs(x68k.i.ROMVER) >> 24
-  if rom_version < 0x16:
-    # CRTMOD16.X check
-    crtmod_vector = x68k.iocs(x68k.i.B_LPEEK,a1=(0x000400 + 4 * 0x10))  # check IOCS $10 vector
-    if crtmod_vector < 0 or (crtmod_vector >= 0xfe0000 and crtmod_vector <= 0xffffff):
-      raise RuntimeError("CRTMOD16.X is required for IPL-ROM 1.5 or lower.")
 
   # cursor off
   x68k.curoff()
@@ -392,6 +382,10 @@ def main():
 
     # タイトル文字表示
     print("\x1b[25;25H\x1b[37mPUSH SPACE KEY\x1b[m", end="")
+
+    # flush key buffer
+    while x68k.iocs(x68k.i.B_KEYSNS) != 0:
+      x68k.iocs(x68k.i.B_KEYINP)
 
     # タイトルキー待ち
     while True:
@@ -458,7 +452,7 @@ def main():
       print("\x1b[24;53H白(後手)", end="")      
     print("\x1b[26;53H2枚", end="")
 
-    print("\x1b[31;1H[←↑↓→]:マス選択 [RET/SP]:駒を置く [p]:パス [ESC]:終了", end="")
+    print("\x1b[32;1H[←↑↓→]:マス選択 [RET/SP]:駒を置く [p]:パス [ESC]:終了", end="")
 
     # COMビットマップ表示
     put_image((408, 104), (104, 124), bitmap_com1)
@@ -507,7 +501,8 @@ def main():
         # 自分の手番
 
         # flush key buffer
-        x68k.dos(x68k.d.KFLUSH,pack('h',0))
+        while x68k.iocs(x68k.i.B_KEYSNS) != 0:
+          x68k.iocs(x68k.i.B_KEYINP)
 
         # カーソルを表示する
         cursor.scroll(True)
@@ -607,12 +602,12 @@ def main():
       counts = board.count()
       if counts[0] > counts[1]:
         computer_win = (color_computer == 1)
-        print("\x1b[31;1H黒の勝ちです\x1b[K", end="")
+        print("\x1b[32;1H黒の勝ちです\x1b[K", end="")
       elif counts[0] < counts[1]:
         computer_win = (color_computer == 2)
-        print("\x1b[31;1H白の勝ちです\x1b[K", end="")
+        print("\x1b[32;1H白の勝ちです\x1b[K", end="")
       else:
-        print("\x1b[31;1H引き分けです\x1b[K", end="")      
+        print("\x1b[32;1H引き分けです\x1b[K", end="")      
 
       # 3秒待つ
       time.sleep(3.000)
@@ -629,21 +624,23 @@ def main():
         load_portrait_image(f"lose{random.randint(1,2)}.dat")
 
       # 文字表示
-      print("\x1b[2;2H\x1b[37mPUSH ANY KEY\x1b[m", end="")
+      print("\x1b[2;2H\x1b[37mPUSH ESC KEY\x1b[m", end="")
 
       # flush key buffer
-      x68k.dos(x68k.d.KFLUSH,pack('h',0))
+      while x68k.iocs(x68k.i.B_KEYSNS) != 0:
+        x68k.iocs(x68k.i.B_KEYINP)
 
       # キー待ち
       while True:
         scan_code = ( x68k.iocs(x68k.i.B_KEYINP) >> 8 ) & 0x7f
-        if scan_code != 0:
+        if scan_code == 0x01:   # ESC
           break
 
   # 終了処理
   
   # flush key buffer
-  x68k.dos(x68k.d.KFLUSH,pack('h',0))
+  while x68k.iocs(x68k.i.B_KEYSNS) != 0:
+    x68k.iocs(x68k.i.B_KEYINP)
 
   # 768 x 512 x 16 (31kHz) mode
   x68k.crtmod(16, True)
