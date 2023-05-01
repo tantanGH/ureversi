@@ -24,7 +24,7 @@ yunk氏の [MicroPython for X680x0](https://github.com/yunkya2/micropython-x68k/
 
 ### X68000Z向け起動用XDF
 
-- [X68Z_MicroReversi_20230501.XDF](https://github.com/tantanGH/ureverse/raw/main/xdf/X68Z_MicroReversi_20230501.XDF)
+- [X68Z_MicroReversi_20230501.XDF](https://github.com/tantanGH/ureversi/raw/main/xdf/X68Z_MicroReversi_20230501.XDF)
 
 RAMDISKを作成し、そこに展開を行います。
 
