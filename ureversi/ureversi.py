@@ -169,6 +169,7 @@ class Board:
           break
         self.board[ cx + cy * 8 ] = (-1) * color
         self.repaint()
+        #time.sleep(0.05)
 
     # 盤面再描画
 #    self.repaint()
@@ -345,6 +346,14 @@ def main():
   # randomize
   random.seed(int(time.time() * 10))
 
+  # IPL-ROM version check
+  rom_version = x68k.iocs(x68k.i.ROMVER) >> 24
+  if rom_version < 0x16:
+    # CRTMOD16.X check
+    crtmod_vector = x68k.iocs(x68k.i.B_LPEEK,a1=(0x000400 + 4 * 0x10))  # check IOCS $10 vector
+    if crtmod_vector < 0 or (crtmod_vector >= 0xfe0000 and crtmod_vector <= 0xffffff):
+      raise RuntimeError("CRTMOD16.X is required for IPL-ROM 1.5 or lower.")
+
   # cursor off
   x68k.curoff()
 
@@ -459,8 +468,9 @@ def main():
     x68k.iocs(x68k.i.B_WPOKE, a1=0xe82600, d1=(b | 0x6f))
 
     # ゲームループ
-    game_end = False
-    color_active = 1
+    game_end = False      # ゲーム終了フラグ
+    color_active = 1      # 現在の手番の色
+    pass_count = 0        # 現在までのパス回数
     while game_end is False and abort is False:
 
       computer_placed = False
@@ -470,18 +480,24 @@ def main():
       
         # COMの手番
 
-        # 試行順をシャッフル
-        pos = list(range(64))
+        # カーソルを消す
+        cursor.scroll(False)
+
+        # 試行順 カド(0,7,56,63)は最優先
+        pos = [ 0, 7, 56, 63 ] + list(range(1,7)) + list(range(8,56)) + list(range(57,63))
+
+        # 試行順のシャッフル
         for i in range(100):
-          a = random.randint(0, 63)
-          b = random.randint(0, 63)
+          a = random.randint(0, 3)
+          b = random.randint(0, 3)
+          c = random.randint(4, 63)
+          d = random.randint(4, 63)
           pos[ a ], pos[ b ] = pos[ b ], pos[ a ]
+          pos[ c ], pos[ d ] = pos[ d ], pos[ c ]
 
         for p in pos:
-          
           # 置けるか？
           if board.place((p % 8, p // 8), color_computer):
-
             # 置けた
             computer_placed = True
             break
@@ -489,9 +505,17 @@ def main():
       else:
         
         # 自分の手番
+
+        # flush key buffer
+        x68k.dos(x68k.d.KFLUSH,pack('h',0))
+
+        # カーソルを表示する
+        cursor.scroll(True)
+
         while player_placed is False and abort is False:
 
           # キーボードでカーソルを移動させスペースキーまたはリターンキーで確定
+          pass_button = False
           while True:
             if x68k.iocs(x68k.i.B_KEYSNS):
               scan_code = ( x68k.iocs(x68k.i.B_KEYINP) >> 8 ) & 0x7f
@@ -507,21 +531,31 @@ def main():
               elif scan_code == 0x3e:     # down key
                 cursor.move_down()
               elif scan_code == 0x35:     # space key
-                color_player = 2
                 break
               elif scan_code == 0x1d:     # return key
-                color_player = 1
                 break
               elif scan_code == 0x1a:     # p key
-                break
+                # 本当に置くとこない？
+                placeable = False
+                for i in range(64):
+                  if len(board.get_placeable_directions((i % 8, i // 8), color_player)) > 0:
+                    placeable = True
+                    break
+                # 本当に置くところなかったのでパス
+                if placeable is False:
+                  pass_button = True
+                  break
 
           # ESCキーが押された？
           if abort:
             break
 
+          # パス有効
+          if pass_button:
+            break
+
           # カーソル位置に本当における？
           if board.place((cursor.pos_x, cursor.pos_y), color_player):
-
             # 置けた
             player_placed = True
             break
@@ -548,17 +582,22 @@ def main():
           game_end = True
           break
 
-        # 手番交代
-        if color_active == 1:
-          color_active = 2
-        else:
-          color_active = 1
+        # パス回数リセット
+        pass_count = 0
 
       else:
 
-        # どちらも置けなかったら終了
-        game_end = True
-        break
+        # パスが2回続いたら終了
+        pass_count += 1
+        if pass_count >= 2:
+          game_end = True
+          break
+
+      # 手番交代
+      if color_active == 1:
+        color_active = 2
+      else:
+        color_active = 1
 
     # 1ゲーム終了
     if abort is False:
@@ -584,13 +623,16 @@ def main():
         pass
       elif computer_win:
         # COMの勝ち
-        load_portrait_image(f"win{random.randint(1,3)}.dat")
+        load_portrait_image(f"win{random.randint(1,2)}.dat")
       else:
         # COMの負け
-        load_portrait_image(f"lose{random.randint(1,3)}.dat")
+        load_portrait_image(f"lose{random.randint(1,2)}.dat")
 
       # 文字表示
       print("\x1b[2;2H\x1b[37mPUSH ANY KEY\x1b[m", end="")
+
+      # flush key buffer
+      x68k.dos(x68k.d.KFLUSH,pack('h',0))
 
       # キー待ち
       while True:
@@ -601,7 +643,7 @@ def main():
   # 終了処理
   
   # flush key buffer
-  x68k.dos(x68k.d.KFLUSH,pack('h',0))  
+  x68k.dos(x68k.d.KFLUSH,pack('h',0))
 
   # 768 x 512 x 16 (31kHz) mode
   x68k.crtmod(16, True)
