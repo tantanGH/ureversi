@@ -2,7 +2,7 @@
 
 Micro Reversi PRO-68K for X680x0/MicroPython
 
-yunk氏の [MicroPython for X680x0](https://github.com/yunkya2/micropython-x68k/tree/port-x68k/ports/x68k) を使って実装したリバーシ(オセロ)です。
+yunk氏の [MicroPython for X680x0](https://github.com/yunkya2/micropython-x68k/tree/port-x68k/ports/x68k) を使って実装したリバーシ(オセロ)です。X68000Z EAKにも対応しています。
 
 <img src='images/ureversi1.png' width='600'/>
 
