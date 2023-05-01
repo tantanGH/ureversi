@@ -4,9 +4,9 @@ Micro Reversi PRO-68K for X680x0/MicroPython
 
 yunk氏の [MicroPython for X680x0](https://github.com/yunkya2/micropython-x68k/tree/port-x68k/ports/x68k) を使って実装したリバーシ(オセロ)です。
 
-<img src='images/ureversi1.png' width='800'/>
+<img src='images/ureversi1.png' width='600'/>
 
-<img src='images/ureversi2.png' width='800'/>
+<img src='images/ureversi2.png' width='600'/>
 
 ---
 
@@ -33,7 +33,7 @@ X68000Z EAK 以外の環境で起動した場合は、最初に見つかったRA
 ---
 
 
-<img src='images/ureversi3.png' width='800'/>
+<img src='images/ureversi3.png' width='600'/>
 
 
 
