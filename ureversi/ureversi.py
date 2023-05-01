@@ -458,7 +458,7 @@ def main():
       print("\x1b[24;53H白(後手)", end="")      
     print("\x1b[26;53H2枚", end="")
 
-    print("\x1b[32;1H[←↑↓→]:マス選択 [RET/SP]:駒を置く [p]:パス [ESC]:終了", end="")
+    print("\x1b[31;1H[←↑↓→]:マス選択 [RET/SP]:駒を置く [p]:パス [ESC]:終了", end="")
 
     # COMビットマップ表示
     put_image((408, 104), (104, 124), bitmap_com1)
@@ -607,12 +607,12 @@ def main():
       counts = board.count()
       if counts[0] > counts[1]:
         computer_win = (color_computer == 1)
-        print("\x1b[32;1H黒の勝ちです\x1b[K", end="")
+        print("\x1b[31;1H黒の勝ちです\x1b[K", end="")
       elif counts[0] < counts[1]:
         computer_win = (color_computer == 2)
-        print("\x1b[32;1H白の勝ちです\x1b[K", end="")
+        print("\x1b[31;1H白の勝ちです\x1b[K", end="")
       else:
-        print("\x1b[32;1H引き分けです\x1b[K", end="")      
+        print("\x1b[31;1H引き分けです\x1b[K", end="")      
 
       # 3秒待つ
       time.sleep(3.000)
