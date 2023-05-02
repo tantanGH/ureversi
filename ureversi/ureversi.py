@@ -5,7 +5,7 @@ import sys
 from struct import pack
 
 # バージョン
-VERSION = const("2023.05.01")
+VERSION = const("2023.05.02")
 
 # ボードクラス
 class Board:
@@ -299,44 +299,20 @@ def load_full_image(image_file):
 
 # 286x512x65536イメージファイルのワイプ表示
 def load_portrait_image(image_file):
-  with open(image_file, "rb") as f:
-    
-    # 512x512x65536モード
-    x68k.vsync()
-    x68k.crtmod(12, True)
 
-    # スプライト＞テキスト＞グラフィックの順に画面プライオリティを変更する
-#    x68k.vsync()
-#    x68k.iocs(x68k.i.B_WPOKE, a1=0xe82500, d1=0b00000110_11100100)
+  # 512x512x65536モード
+  x68k.vsync()
+  x68k.crtmod(12, True)
+  gvram = x68k.GVRam()
 
-    # ほぼ黒のテキストで塗りつぶしておく
-#    tvram = x68k.TVRam()
-#    tvram.palet(2, 0b00000_00000_00000_1)
-#    tvram.fill(1, 0, 0, 511, 511)
-
-    # 表示領域外にも描けるようにクリッピング領域を広げる
-#    x68k.iocs(x68k.i.WINDOW, d1=0, d2=0, d3=511, d4=511)
-
-    # 一旦グラフィックOFF
-#    b = x68k.iocs(x68k.i.B_WPEEK, a1=0xe82600) & 0xffe0
-#    x68k.vsync()
-#    x68k.iocs(x68k.i.B_WPOKE, a1=0xe82600, d1=b)
-
-    # ファイルの内容をGVRAMにあえて4ラインずつ転送
-    gvram = x68k.GVRam()
-    for y in range(0, 512, 4):
-      line_data = f.read(286 * 2 * 4)
-      x68k.vsync()
-      gvram.put(112, y, 397, y + 3, line_data)
-
-    # グラフィックON
-#    x68k.vsync()
-#    x68k.iocs(x68k.i.B_WPOKE, a1=0xe82600, d1=(b | 0x0f))  
-
-    # テキストを消していく
-#    for y in reversed(range(512)):
-#      x68k.vsync()
-#      tvram.xline(1, 0, y, 512, 0)
+  for i in range(4):
+    with open(image_file, "rb") as f:
+      # ファイルの内容をGVRAMにあえて4ラインずつ4度に分けて転送
+      for y in range(0, 512, 16):
+        line_data = f.read(286 * 2 * 16)
+        draw_data = line_data[ 286 * 2 * 4 * i : 286 * 2 * 4 * ( i + 1 ) ]
+        x68k.vsync()
+        gvram.put(112, y + i * 4, 397, y + i * 4 + 3, draw_data)
 
 # メイン
 def main():
@@ -360,7 +336,7 @@ def main():
 
   # COM顔ビットマップデータのロード
   bitmap_com1 = None
-  with open("com1.dat", "rb") as f:
+  with open("face1.dat", "rb") as f:
     bitmap_com1 = f.read()
 
   # メインループ
@@ -452,7 +428,7 @@ def main():
       print("\x1b[24;53H白(後手)", end="")      
     print("\x1b[26;53H2枚", end="")
 
-    print("\x1b[32;1H[←↑↓→]:マス選択 [RET/SP]:駒を置く [p]:パス [ESC]:終了", end="")
+    print("\x1b[32;1H[←↑↓→]:場所選択 [RET/SP]:駒を置く [P]:パス [ESC]:終了", end="")
 
     # COMビットマップ表示
     put_image((408, 104), (104, 124), bitmap_com1)
