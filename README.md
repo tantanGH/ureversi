@@ -1,4 +1,4 @@
-# ureversi
+# Micro Reversi
 
 Micro Reversi PRO-68K for X680x0/MicroPython
 
